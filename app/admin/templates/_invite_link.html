@@ -1,0 +1,8 @@
+<article>
+  <h4>Yangi {{ 'ustoz' if role == 'teacher' else 'admin' }} uchun havola</h4>
+  <div class="copy-row">
+    <input type="text" readonly value="{{ url }}" id="invite-url">
+    <button class="secondary" type="button" data-copy="{{ url }}">Nusxala</button>
+  </div>
+  <p class="muted">Ushbu havolani {{ 'ustozga' if role == 'teacher' else 'admin' }} yuboring. U Telegram'da ochib, /start bosganda qo'shiladi.</p>
+</article>

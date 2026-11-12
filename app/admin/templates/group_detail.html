@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ group.name }} - Admin{% endblock %}
+{% block content %}
+<p><a href="/admin/groups">← Guruhlar</a></p>
+<h1>{{ group.name }}</h1>
+
+<div class="grid">
+  <article>
+    <h3>Ma'lumotlar</h3>
+    <form hx-post="/admin/groups/{{ group.id }}" hx-swap="none"
+          hx-on::after-request="if(event.detail.successful) location.reload()">
+      <label>Nomi
+        <input type="text" name="name" value="{{ group.name }}" required>
+      </label>
+      <label>Ustoz
+        <select name="teacher_id">
+          <option value="">— Ustozsiz —</option>
+          {% for t in teachers %}
+          <option value="{{ t.id }}" {% if group.teacher_id == t.id %}selected{% endif %}>{{ t.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button type="submit">Saqlash</button>
+    </form>
+    <p class="muted">Ustoz almashtirilganda eski darslar eski ustoz nomida qoladi.</p>
+  </article>
+
+  <article>
+    <h3>Oxirgi 10 dars</h3>
+    {% if lessons %}
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Sana</th><th>Keldi</th><th>Kelmedi</th><th>Keck</th><th>Foiz</th></tr></thead>
+      <tbody>
+      {% for l in lessons %}
+        <tr>
+          <td>{{ l.lesson_date.strftime('%d.%m.%Y') }}</td>
+          <td>{{ l.present }}</td>
+          <td>{{ l.absent }}</td>
+          <td>{{ l.late }}</td>
+          <td><strong>{{ l.percent }}%</strong></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p class="muted">Hali darslar yo'q.</p>
+    {% endif %}
+  </article>
+</div>
+
+<h2>O'quvchilar ({{ students|length }})</h2>
+{% if students %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Ism</th><th>Ota-ona</th><th></th></tr></thead>
+  <tbody>
+  {% for s in students %}
+    <tr>
+      <td><a href="/admin/students/{{ s.id }}">{{ s.name }}</a></td>
+      <td>{% if s.parent_linked %}<span class="badge badge-green">ulangan</span>{% else %}<span class="badge badge-gray">ulanmagan</span>{% endif %}</td>
+      <td>
+        <form hx-post="/admin/students/{{ s.id }}/archive" hx-swap="none"
+              hx-on::after-request="if(event.detail.successful) location.reload()"
+              data-confirm="'{{ s.name }}' ni arxivlashni xohlaysizmi?" style="display:inline">
+          <button class="secondary outline" type="submit">Arxivlash</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="muted">Bu guruhda hali o'quvchi yo'q. <a href="/admin/students">O'quvchilar sahifasidan</a> qo'shing.</p>
+{% endif %}
+{% endblock %}

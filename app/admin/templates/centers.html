@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Markazlar - Admin{% endblock %}
+{% block content %}
+<h1>Markazlar</h1>
+
+{% if centers %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>ID</th><th>Nomi</th><th>Owner</th><th>Telegram</th><th>Guruh</th><th>O'quvchi</th><th>Holat</th></tr></thead>
+  <tbody>
+  {% for c in centers %}
+    <tr>
+      <td>{{ c.id }}</td>
+      <td><strong>{{ c.name }}</strong></td>
+      <td>{{ c.owner_name or '—' }}{% if c.owner_username %} <span class="muted">@{{ c.owner_username }}</span>{% endif %}</td>
+      <td>{{ c.owner_telegram_id or '—' }}</td>
+      <td>{{ c.group_count }}</td>
+      <td>{{ c.student_count }}</td>
+      <td>{% if c.is_active %}<span class="badge badge-green">faol</span>{% else %}<span class="badge badge-red">nofaol</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="muted">Hali markaz yo'q.</p>
+{% endif %}
+
+<h2>Yangi markaz</h2>
+<form hx-post="/admin/centers" hx-swap="none"
+      hx-on::after-request="if(event.detail.successful) location.reload()">
+  <div class="grid">
+    <input type="text" name="name" placeholder="Markaz nomi" required>
+    <input type="number" name="owner_telegram_id" placeholder="Owner Telegram ID" required>
+    <input type="text" name="owner_first_name" placeholder="Owner ismi" required>
+    <input type="text" name="owner_last_name" placeholder="Owner familiyasi">
+    <input type="text" name="owner_username" placeholder="Owner username (@sizsiz)">
+    <button type="submit">Markaz yaratish</button>
+  </div>
+  <p class="muted">Owner Telegram ID'ni <a href="https://t.me/userinfobot" target="_blank">@userinfobot</a> orqali bilib olishi mumkin — u /start qilganda ID'sini ko'rsatadi.</p>
+</form>
+<p class="muted">Owner bot orqali /start qilganda o'z markaziga kira oladi.</p>
+{% endblock %}

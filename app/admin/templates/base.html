@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Admin panel{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <style>
+    .table-wrap { overflow-x: auto; }
+    .muted { color: var(--pico-muted-color); font-size: .9em; }
+    .badge { display: inline-block; padding: .15em .6em; border-radius: 1em; font-size: .85em; }
+    .badge-green { background: #d9f5e3; color: #1a7f4b; }
+    .badge-red { background: #fde2e2; color: #b03030; }
+    .badge-gray { background: #eee; color: #666; }
+    .copy-row { display: flex; gap: .5em; align-items: center; }
+    .copy-row input { flex: 1; min-width: 0; }
+    dialog::backdrop { background: rgba(0,0,0,.4); }
+    nav ul li a[aria-current] { font-weight: bold; }
+  </style>
+</head>
+<body hx-headers='{"X-CSRF-Token": "{{ csrf_token }}"}'>
+
+<nav>
+  <ul>
+    <li><strong>{{ center.name if center else 'Admin' }}</strong></li>
+  </ul>
+  <ul>
+    {% if admin and admin.role == 'super_admin' %}
+    <li><a href="/admin/centers" {% if request.url.path.startswith('/admin/centers') %}aria-current="page"{% endif %}>Markazlar</a></li>
+    {% endif %}
+    <li><a href="/admin/groups" {% if request.url.path.startswith('/admin/groups') %}aria-current="page"{% endif %}>Guruhlar</a></li>
+    <li><a href="/admin/students" {% if request.url.path.startswith('/admin/students') %}aria-current="page"{% endif %}>O'quvchilar</a></li>
+    <li><a href="/admin/attendance" {% if request.url.path.startswith('/admin/attendance') %}aria-current="page"{% endif %}>Davomat</a></li>
+    <li><a href="/admin/teachers" {% if request.url.path.startswith('/admin/teachers') %}aria-current="page"{% endif %}>Ustozlar</a></li>
+    <li><a href="/admin/parents" {% if request.url.path.startswith('/admin/parents') %}aria-current="page"{% endif %}>Ota-onalar</a></li>
+    <li>
+      <details class="dropdown">
+        <summary>{{ user.first_name if user else 'User' }}</summary>
+        <ul>
+          <li><button hx-post="/admin/logout" hx-swap="none" style="background:none;border:none;padding:.3em 1em;text-align:left;cursor:pointer;">Chiqish</button></li>
+        </ul>
+      </details>
+    </li>
+  </ul>
+</nav>
+
+<main class="container">
+{% block content %}{% endblock %}
+</main>
+
+<dialog id="confirm-dialog">
+  <article>
+    <p id="confirm-text"></p>
+    <footer>
+      <button id="confirm-cancel" class="secondary">Bekor</button>
+      <button id="confirm-ok">Tasdiqlash</button>
+    </footer>
+  </article>
+</dialog>
+
+<script>
+(function () {
+  // HTMX xatolar: 401 -> login, boshqa -> detail xabari
+  document.body.addEventListener('htmx:responseError', function (e) {
+    if (e.detail.xhr.status === 401) { window.location.href = '/admin/login'; return; }
+    try {
+      var d = JSON.parse(e.detail.xhr.responseText);
+      if (d.detail) alert(d.detail);
+    } catch (_) {}
+  });
+
+  // Tasdiqlash oynasi: <form data-confirm="...">
+  var dlg = document.getElementById('confirm-dialog');
+  var pending = null;
+  document.addEventListener('submit', function (e) {
+    var f = e.target;
+    if (f.dataset && f.dataset.confirm && !f.dataset.confirmed) {
+      e.preventDefault();
+      pending = f;
+      document.getElementById('confirm-text').textContent = f.dataset.confirm;
+      dlg.showModal();
+    }
+  });
+  document.getElementById('confirm-ok').onclick = function () {
+    dlg.close();
+    if (pending) { pending.dataset.confirmed = '1'; pending.requestSubmit(); }
+    pending = null;
+  };
+  document.getElementById('confirm-cancel').onclick = function () { dlg.close(); pending = null; };
+
+  // Nusxalash tugmasi
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-copy]');
+    if (btn) {
+      navigator.clipboard.writeText(btn.dataset.copy).then(function () {
+        btn.textContent = 'Nusxalandi';
+        setTimeout(function () { btn.textContent = 'Nusxala'; }, 1500);
+      });
+    }
+  });
+})();
+</script>
+</body>
+</html>

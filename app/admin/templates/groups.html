@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Guruhlar - Admin{% endblock %}
+{% block content %}
+<h1>Guruhlar</h1>
+
+{% if groups %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Nomi</th><th>Ustoz</th><th>O'quvchilar</th><th></th></tr></thead>
+  <tbody>
+  {% for g in groups %}
+    <tr>
+      <td><a href="/admin/groups/{{ g.id }}"><strong>{{ g.name }}</strong></a>{% if not g.teacher %} <span class="badge badge-gray">ustozsiz</span>{% endif %}</td>
+      <td>{{ g.teacher_name or '—' }}</td>
+      <td>{{ g.student_count }}</td>
+      <td>
+        <form hx-post="/admin/groups/{{ g.id }}/archive" hx-swap="none"
+              hx-on::after-request="if(event.detail.successful) location.reload()"
+              data-confirm="'{{ g.name }}' guruhini arxivlashni xohlaysizmi?" style="display:inline">
+          <button class="secondary outline" type="submit">Arxivlash</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="muted">Hozircha guruhlar yo'q. Quyidagi forma orqali birinchi guruhni yarating.</p>
+{% endif %}
+
+<h2>Yangi guruh</h2>
+<form hx-post="/admin/groups" hx-swap="none" hx-on::after-request="if(event.detail.successful) location.reload()">
+  <div class="grid">
+    <input type="text" name="name" placeholder="Guruh nomi (masalan: Matematika 5-A)" required>
+    <select name="teacher_id">
+      <option value="">Ustozsiz</option>
+      {% for t in teachers %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}
+    </select>
+    <button type="submit">Yaratish</button>
+  </div>
+</form>
+
+<h2>Guruhlarni birlashtirish</h2>
+{% if groups|length > 1 %}
+<form hx-post="/admin/groups/merge" data-confirm="Manba guruhdagi barcha o'quvchilar maqsad guruhga ko'chiriladi va manba guruh arxivlanadi. Davom etasizmi?" hx-swap="none" hx-on::after-request="if(event.detail.successful) location.reload()">
+  <div class="grid">
+    <select name="source_id" required>
+      <option value="">Manba guruh (ko'chiriladigan)</option>
+      {% for g in groups %}<option value="{{ g.id }}">{{ g.name }}</option>{% endfor %}
+    </select>
+    <select name="target_id" required>
+      <option value="">Maqsad guruh</option>
+      {% for g in groups %}<option value="{{ g.id }}">{{ g.name }}</option>{% endfor %}
+    </select>
+    <button class="secondary" type="submit">Birlashtirish</button>
+  </div>
+</form>
+{% else %}
+<p class="muted">Birlashtirish uchun kamida 2 ta guruh kerak.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Davomat - Admin{% endblock %}
+{% block content %}
+<h1>Davomat</h1>
+
+<h2>Guruhlar bo'yicha</h2>
+{% if group_stats %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Guruh</th><th>Keldi</th><th>Kelmedi</th><th>Keck</th><th>Foiz</th></tr></thead>
+  <tbody>
+  {% for g in group_stats %}
+    <tr>
+      <td>{{ g.name }}</td>
+      <td>{{ g.present }}</td>
+      <td>{{ g.absent }}</td>
+      <td>{{ g.late }}</td>
+      <td><strong>{{ g.percent }}%</strong></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="muted">Hali davomat belgilanmagan.</p>
+{% endif %}
+
+<h2>O'tgan darslar</h2>
+<form method="get" class="grid">
+  <label>Guruh
+    <select name="group_id" onchange="this.form.submit()">
+      <option value="">Barchasi</option>
+      {% for g in groups %}
+      <option value="{{ g.id }}" {% if f_group_id == g.id %}selected{% endif %}>{{ g.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+</form>
+
+{% if lessons %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Sana</th><th>Guruh</th><th>O'quvchilar</th><th>Keldi</th><th>Kelmedi</th><th>Keck</th><th>Foiz</th><th></th></tr></thead>
+  <tbody>
+  {% for l in lessons %}
+    <tr>
+      <td>{{ l.day }}</td>
+      <td>{{ l.group_name }}</td>
+      <td>{{ l.present + l.absent + l.late }}</td>
+      <td>{{ l.present }}</td>
+      <td>{{ l.absent }}</td>
+      <td>{{ l.late }}</td>
+      <td><strong>{{ l.percent }}%</strong></td>
+      <td><a href="/admin/attendance/{{ l.id }}">Ochish</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="muted">Bu filtr bo'yicha darslar topilmadi.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Davomat - {{ group.name }}{% endblock %}
+{% block content %}
+<p><a href="/admin/attendance">← Davomat</a></p>
+<h1>{{ group.name }} — {{ lesson_day }}</h1>
+
+{% if records %}
+<form hx-post="/admin/attendance/{{ lesson.id }}" hx-swap="none"
+      hx-on::after-request="if(event.detail.successful) location.reload()">
+<div class="table-wrap">
+<table>
+  <thead><tr><th>O'quvchi</th><th>Holat</th></tr></thead>
+  <tbody>
+  {% for r in records %}
+    <tr>
+      <td>{{ r.name }}</td>
+      <td>
+        <select name="status_{{ r.id }}">
+          <option value="present" {% if r.status == 'present' %}selected{% endif %}>Keldi</option>
+          <option value="absent" {% if r.status == 'absent' %}selected{% endif %}>Kelmadi</option>
+          <option value="late" {% if r.status == 'late' %}selected{% endif %}>Keck qoldi</option>
+        </select>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<label>
+  <input type="checkbox" name="notify" value="1">
+  Ota-onaga ham xabar yuborilsin
+</label>
+<p class="muted">Belgilanmasa ota-onaga xabar ketmaydi. Belgilansa faqat yangi 'kelmadi/keck' holatlari uchun xabar yaratiladi — mavjud xabarlar takrorlanmaydi.</p>
+<button type="submit">Saqlash</button>
+</form>
+{% else %}
+<p class="muted">Bu darsda hali davomat belgilanmagan.</p>
+{% endif %}
+
+<h2>Ota-ona xabarlari</h2>
+{% if notifications %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>O'quvchi</th><th>Ota-ona</th><th>Holat</th><th>Urinish</th></tr></thead>
+  <tbody>
+  {% for n in notifications %}
+    <tr>
+      <td>{{ n.student_name }}</td>
+      <td>{{ n.parent_name or '—' }}</td>
+      <td>
+        {% if n.status == 'sent' %}<span class="badge badge-green">yuborildi</span>
+        {% elif n.status == 'pending' %}<span class="badge badge-gray">navbatda</span>
+        {% elif n.status == 'blocked' %}<span class="badge badge-red">bot bloklangan</span>
+        {% elif n.status == 'failed' %}<span class="badge badge-red">xato</span>
+        {% else %}<span class="badge badge-gray">{{ n.status }}</span>{% endif %}
+      </td>
+      <td>{{ n.attempts }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="muted">Bu dars uchun ota-ona xabarlari yo'q.</p>
+{% endif %}
+{% endblock %}

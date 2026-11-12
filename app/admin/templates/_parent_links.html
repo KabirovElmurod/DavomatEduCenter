@@ -1,0 +1,22 @@
+{% if links %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>O'quvchi</th><th>Havola</th></tr></thead>
+  <tbody>
+  {% for l in links %}
+    <tr>
+      <td>{{ l.name }}</td>
+      <td>
+        <div class="copy-row">
+          <input type="text" readonly value="{{ l.url }}">
+          <button class="secondary" type="button" data-copy="{{ l.url }}">Nusxala</button>
+        </div>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="muted">Barcha o'quvchilarning havolalari allaqachon yaratilgan.</p>
+{% endif %}

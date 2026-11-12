@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kirish - Admin panel</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+</head>
+<body>
+<main class="container" style="max-width:30em;margin-top:15vh;">
+  <h1>Kirish</h1>
+  {% if error %}<p style="color:#b03030">{{ error }}</p>{% endif %}
+  {% if not bot_username %}
+    <article>
+      <p><strong>BOT_USERNAME sozlanmagan.</strong></p>
+      <p class="muted">.env faylida <code>BOT_USERNAME=...</code> ni kiriting (BotFather'dagi bot username, @ belgisisiz).</p>
+    </article>
+  {% else %}
+    <p>Davom etish uchun Telegram orqali kiring:</p>
+    <div id="tg-login"></div>
+    <p id="login-error" style="color:#b03030;display:none"></p>
+  {% endif %}
+</main>
+{% if dev_mode %}
+  <hr>
+  <p class="muted">Dev rejim — Telegram'siz kirish:</p>
+  {% for u in dev_users %}
+    <p><a href="/admin/dev-login?telegram_id={{ u.telegram_id }}">{{ u.name }} ({{ u.telegram_id }})</a></p>
+  {% else %}
+    <p class="muted">Owner/admin user topilmadi.</p>
+  {% endfor %}
+{% endif %}
+{% if bot_username %}
+<script src="https://telegram.org/js/telegram-widget.js?22"
+        data-telegram-login="{{ bot_username }}"
+        data-size="large"
+        data-onauth="onTelegramAuth(user)"
+        data-request-access="write"></script>
+<script>
+async function onTelegramAuth(user) {
+  const err = document.getElementById('login-error');
+  try {
+    const r = await fetch('/admin/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(user),
+    });
+    const data = await r.json();
+    if (r.ok && data.success) {
+      window.location.href = data.redirect || '/admin/groups';
+    } else {
+      err.textContent = data.detail || 'Login xatosi';
+      err.style.display = 'block';
+    }
+  } catch (e) {
+    err.textContent = 'Server bilan aloqa xatosi';
+    err.style.display = 'block';
+  }
+}
+</script>
+{% endif %}
+</body>
+</html>

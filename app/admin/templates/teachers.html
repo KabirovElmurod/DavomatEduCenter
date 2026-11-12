@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Ustozlar - Admin{% endblock %}
+{% block content %}
+<h1>Ustozlar</h1>
+
+<article>
+  <h3>Yangi taklif havolasi</h3>
+  <form hx-post="/admin/teachers/invite" hx-target="#invite-result" hx-swap="innerHTML">
+    <div class="grid">
+      <select name="role">
+        <option value="teacher">Ustoz</option>
+        <option value="admin">Admin</option>
+      </select>
+      <button type="submit">Havola yaratish</button>
+    </div>
+  </form>
+  <div id="invite-result"></div>
+</article>
+
+{% if teachers %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Ism</th><th>Mutaxassislik</th><th>Guruhlar</th><th>Holat</th><th></th></tr></thead>
+  <tbody>
+  {% for t in teachers %}
+    <tr>
+      <td><strong>{{ t.name }}</strong>{% if t.username %} <span class="muted">@{{ t.username }}</span>{% endif %}</td>
+      <td>{{ t.specialization or '—' }}</td>
+      <td>{{ t.group_count }}</td>
+      <td>{% if t.is_active %}<span class="badge badge-green">faol</span>{% else %}<span class="badge badge-red">nofaol</span>{% endif %}</td>
+      <td>
+        {% if t.is_active %}
+        <form hx-post="/admin/teachers/{{ t.id }}/deactivate" hx-swap="none"
+              hx-on::after-request="if(event.detail.successful) location.reload()"
+              data-confirm="'{{ t.name }}' ni nofaol qilasizmi? Uning guruhlari 'ustozsiz' holatga o'tadi." style="display:inline">
+          <button class="secondary outline" type="submit">Nofaol</button>
+        </form>
+        {% else %}
+        <form hx-post="/admin/teachers/{{ t.id }}/activate" hx-swap="none"
+              hx-on::after-request="if(event.detail.successful) location.reload()" style="display:inline">
+          <button type="submit">Faollashtirish</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="muted">Hozircha ustozlar yo'q. Yuqoridagi forma orqali taklif havolasi yarating.</p>
+{% endif %}
+{% endblock %}

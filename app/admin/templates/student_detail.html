@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}{{ student.name }} - Admin{% endblock %}
+{% block content %}
+<p><a href="/admin/students">← O'quvchilar</a></p>
+<h1>{{ student.name }} {% if not student.is_active %}<span class="badge badge-red">arxiv</span>{% endif %}</h1>
+
+<div class="grid">
+  <article>
+    <h3>Ma'lumotlar</h3>
+    <form hx-post="/admin/students/{{ student.id }}" hx-swap="none"
+          hx-on::after-request="if(event.detail.successful) location.reload()">
+      <label>Ism
+        <input type="text" name="name" value="{{ student.name }}" required>
+      </label>
+      <label>Guruh
+        <select name="group_id">
+          <option value="">— Guruhsiz —</option>
+          {% for g in groups %}
+          <option value="{{ g.id }}" {% if student.group_id == g.id %}selected{% endif %}>{{ g.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button type="submit">Saqlash</button>
+    </form>
+    <p class="muted">Guruh almashtirilganda ko'chirish tarixi saqlanadi.</p>
+    {% if student.is_active %}
+    <form hx-post="/admin/students/{{ student.id }}/archive" hx-swap="none"
+          hx-on::after-request="if(event.detail.successful) location.href='/admin/students'"
+          data-confirm="'{{ student.name }}' ni arxivlashni xohlaysizmi?">
+      <button class="secondary outline" type="submit">Arxivlash</button>
+    </form>
+    {% else %}
+    <form hx-post="/admin/students/{{ student.id }}/restore" hx-swap="none"
+          hx-on::after-request="if(event.detail.successful) location.reload()">
+      <button type="submit">Tiklash</button>
+    </form>
+    {% endif %}
+  </article>
+
+  <article>
+    <h3>Ota-ona havolasi</h3>
+    {% if parent_link and not parent_link.revoked_at %}
+      <p>Ulangan: <strong>{{ parent_link.parent_name or '—' }}</strong></p>
+      <div class="copy-row">
+        <input type="text" readonly value="{{ parent_link.url }}" id="plink">
+        <button class="secondary" type="button" data-copy="{{ parent_link.url }}">Nusxala</button>
+      </div>
+      <div class="grid">
+        <form hx-post="/admin/parents/{{ parent_link.id }}/regenerate" hx-swap="none"
+              hx-on::after-request="if(event.detail.successful) location.reload()"
+              data-confirm="Eski havola bekor qilinadi va yangisi yaratiladi. Davom etasizmi?">
+          <button class="secondary" type="submit">Qayta generatsiya</button>
+        </form>
+        <form hx-post="/admin/parents/{{ parent_link.id }}/revoke" hx-swap="none"
+              hx-on::after-request="if(event.detail.successful) location.reload()"
+              data-confirm="Ota-ona bog'lanishini uzishni xohlaysizmi?">
+          <button class="secondary outline" type="submit">Uzish</button>
+        </form>
+      </div>
+    {% else %}
+      <p class="muted">Hali ota-ona ulanmagan.</p>
+      <form hx-post="/admin/parents/create" hx-swap="none"
+            hx-on::after-request="if(event.detail.successful) location.reload()">
+        <input type="hidden" name="student_id" value="{{ student.id }}">
+        <button type="submit">Havola yaratish</button>
+      </form>
+    {% endif %}
+  </article>
+</div>
+
+{% if history %}
+<h2>Guruh tarixi</h2>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Guruh</th><th>Dan</th><th>Gacha</th></tr></thead>
+  <tbody>
+  {% for h in history %}
+    <tr><td>{{ h.group_name or '—' }}</td><td>{{ h.from_date.strftime('%d.%m.%Y') }}</td><td>{{ h.to_date.strftime('%d.%m.%Y') if h.to_date else 'hozir' }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}

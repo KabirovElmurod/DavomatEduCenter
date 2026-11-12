@@ -1,0 +1,14 @@
+.env
+__pycache__/
+.venv/
+node_modules/
+dist/
+roadmap_state.json
+roadmap_state.json.bak
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.alembic/versions/*.pyc

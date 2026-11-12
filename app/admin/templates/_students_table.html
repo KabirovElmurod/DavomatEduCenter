@@ -1,0 +1,40 @@
+{% if students %}
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th><input type="checkbox" onclick="document.querySelectorAll('.stu-check').forEach(c=>c.checked=this.checked)"></th>
+      <th>Ism</th><th>Guruh</th><th>Ota-ona</th><th>Holat</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for s in students %}
+    <tr>
+      <td>{% if s.is_active %}<input type="checkbox" class="stu-check" name="student_ids" value="{{ s.id }}" form="bulk-form">{% endif %}</td>
+      <td><a href="/admin/students/{{ s.id }}">{{ s.name }}</a></td>
+      <td>{{ s.group_name or '—' }}</td>
+      <td>{% if s.parent_linked %}<span class="badge badge-green">ulangan</span>{% else %}<span class="badge badge-gray">ulanmagan</span>{% endif %}</td>
+      <td>{% if s.is_active %}<span class="badge badge-green">faol</span>{% else %}<span class="badge badge-red">arxiv</span>{% endif %}</td>
+      <td>
+        {% if s.is_active %}
+        <form hx-post="/admin/students/{{ s.id }}/archive" hx-target="#students-table" hx-swap="innerHTML"
+              hx-include="#filters" style="display:inline"
+              data-confirm="'{{ s.name }}' ni arxivlashni xohlaysizmi?">
+          <button class="secondary outline" type="submit">Arxiv</button>
+        </form>
+        {% else %}
+        <form hx-post="/admin/students/{{ s.id }}/restore" hx-target="#students-table" hx-swap="innerHTML"
+              hx-include="#filters" style="display:inline">
+          <button class="secondary" type="submit">Tiklash</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<p class="muted">{{ students|length }} ta o'quvchi</p>
+{% else %}
+<p class="muted">O'quvchilar topilmadi. Filtrlarni o'zgartiring yoki yangi o'quvchi qo'shing.</p>
+{% endif %}

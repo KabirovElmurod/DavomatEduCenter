@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Ota-onalar - Admin{% endblock %}
+{% block content %}
+<h1>Ota-onalar</h1>
+
+<h2>Ulanmagan o'quvchilar ({{ unlinked|length }})</h2>
+{% if unlinked %}
+<form hx-post="/admin/parents/bulk-create" hx-target="#unlinked-links" hx-swap="innerHTML">
+  <button class="secondary" type="submit">Barchasi uchun havola yaratish</button>
+</form>
+<div id="unlinked-links">
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>O'quvchi</th><th>Guruh</th><th>Havola</th><th></th></tr></thead>
+    <tbody>
+    {% for s in unlinked %}
+      <tr>
+        <td><a href="/admin/students/{{ s.id }}">{{ s.name }}</a></td>
+        <td>{{ s.group_name or '—' }}</td>
+        <td>
+          {% if s.parent_url %}
+          <div class="copy-row">
+            <input type="text" readonly value="{{ s.parent_url }}">
+            <button class="secondary" type="button" data-copy="{{ s.parent_url }}">Nusxala</button>
+          </div>
+          {% else %}<span class="muted">—</span>{% endif %}
+        </td>
+        <td>
+          {% if not s.parent_url %}
+          <form hx-post="/admin/parents/create" hx-swap="none"
+                hx-on::after-request="if(event.detail.successful) location.reload()" style="display:inline">
+            <input type="hidden" name="student_id" value="{{ s.id }}">
+            <button class="secondary outline" type="submit">Yaratish</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% else %}
+<p class="muted">Barcha o'quvchilarning ota-onalari ulangan.</p>
+{% endif %}
+
+<h2>Ulangan ota-onalar</h2>
+{% if linked %}
+<div class="table-wrap">
+<table>
+  <thead><tr><th>O'quvchi</th><th>Ota-ona</th><th>Telegram</th><th>Holat</th><th></th></tr></thead>
+  <tbody>
+  {% for p in linked %}
+    <tr>
+      <td><a href="/admin/students/{{ p.student_id }}">{{ p.student_name }}</a></td>
+      <td>{{ p.parent_name or '—' }}</td>
+      <td>{% if p.parent_username %}@{{ p.parent_username }}{% else %}—{% endif %}</td>
+      <td>{% if p.revoked_at %}<span class="badge badge-red">uzilgan</span>{% else %}<span class="badge badge-green">faol</span>{% endif %}</td>
+      <td>
+        {% if not p.revoked_at %}
+        <div class="grid" style="grid-template-columns:1fr 1fr;gap:.5em">
+          <form hx-post="/admin/parents/{{ p.id }}/regenerate" hx-swap="none"
+                hx-on::after-request="if(event.detail.successful) location.reload()"
+                data-confirm="Eski havola bekor qilinadi. Davom etasizmi?">
+            <button class="secondary outline" type="submit">Qayta gen.</button>
+          </form>
+          <form hx-post="/admin/parents/{{ p.id }}/revoke" hx-swap="none"
+                hx-on::after-request="if(event.detail.successful) location.reload()"
+                data-confirm="Ota-ona bog'lanishini uzishni xohlaysizmi?">
+            <button class="secondary outline" type="submit">Uzish</button>
+          </form>
+        </div>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="muted">Hali ulangan ota-ona yo'q.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}O'quvchilar - Admin{% endblock %}
+{% block content %}
+<h1>O'quvchilar</h1>
+
+<div class="grid">
+  <article>
+    <h3>Qo'shish</h3>
+    <form hx-post="/admin/students" hx-swap="none" hx-on::after-request="if(event.detail.successful) location.reload()">
+      <label>Yakka o'quvchi
+        <input type="text" name="name" placeholder="Ism familiya" required>
+      </label>
+      <label>Guruh
+        <select name="group_id">
+          <option value="">— Guruhsiz —</option>
+          {% for g in groups %}<option value="{{ g.id }}">{{ g.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <button type="submit">Qo'shish</button>
+    </form>
+
+    <hr>
+    <form hx-post="/admin/students/bulk" hx-swap="none" hx-on::after-request="if(event.detail.successful) location.reload()">
+      <label>Ommaviy qo'shish (har qatorga bitta ism)
+        <textarea name="names" rows="5" placeholder="Ali Valiyev&#10;Bekzod Karimov&#10;..." required></textarea>
+      </label>
+      <label>Guruh
+        <select name="group_id">
+          <option value="">— Guruhsiz —</option>
+          {% for g in groups %}<option value="{{ g.id }}">{{ g.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <button class="secondary" type="submit">Ommaviy qo'shish</button>
+    </form>
+  </article>
+
+  <article>
+    <h3>Filtrlar</h3>
+    <form id="filters" hx-get="/admin/partials/students-table" hx-target="#students-table" hx-swap="innerHTML" hx-trigger="change">
+      <label>Qidiruv
+        <input type="text" name="q" value="{{ f.q }}" placeholder="Ism bo'yicha..."
+               hx-get="/admin/partials/students-table" hx-target="#students-table" hx-swap="innerHTML"
+               hx-trigger="input changed delay:300ms" hx-include="#filters">
+      </label>
+      <div class="grid">
+        <select name="group_id">
+          <option value="">Barcha guruhlar</option>
+          {% for g in groups %}<option value="{{ g.id }}" {% if f.group_id == g.id %}selected{% endif %}>{{ g.name }}</option>{% endfor %}
+        </select>
+        <select name="parent_status">
+          <option value="">Ota-ona: barchasi</option>
+          <option value="linked" {% if f.parent_status == 'linked' %}selected{% endif %}>Ulangan</option>
+          <option value="unlinked" {% if f.parent_status == 'unlinked' %}selected{% endif %}>Ulanmagan</option>
+        </select>
+        <select name="status">
+          <option value="active" {% if f.status == 'active' %}selected{% endif %}>Faol</option>
+          <option value="archived" {% if f.status == 'archived' %}selected{% endif %}>Arxiv</option>
+          <option value="all" {% if f.status == 'all' %}selected{% endif %}>Barchasi</option>
+        </select>
+      </div>
+    </form>
+  </article>
+</div>
+
+<div id="students-table">
+  {% include "_students_table.html" %}
+</div>
+
+{% if students %}
+<article>
+  <h3>Ommaviy ko'chirish</h3>
+  <form id="bulk-form" hx-post="/admin/students/bulk-transfer" data-confirm="Tanlangan o'quvchilar tanlangan guruhga ko'chiriladi. Davom etasizmi?"
+        hx-swap="none" hx-on::after-request="if(event.detail.successful) location.reload()">
+    <div class="grid">
+      <select name="group_id" required>
+        <option value="">— Yangi guruh —</option>
+        {% for g in groups %}<option value="{{ g.id }}">{{ g.name }}</option>{% endfor %}
+      </select>
+      <button class="secondary" type="submit">Tanlanganlarni ko'chirish</button>
+    </div>
+    <p class="muted">Jadvaldagi checkbox'lar orqali o'quvchilarni tanlang.</p>
+  </form>
+</article>
+{% endif %}
+{% endblock %}

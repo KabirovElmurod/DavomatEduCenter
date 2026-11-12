@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Davomat</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  </head>
+  <body>
+    <div id="app" x-data="app()" x-init="init()">
+      <!-- Skelet loader -->
+      <template x-if="screen === 'loading'">
+        <div class="skeleton">
+          <div class="sk sk-title"></div>
+          <div class="sk"></div>
+          <div class="sk"></div>
+          <div class="sk"></div>
+        </div>
+      </template>
+
+      <!-- Ekran 1: guruhlar -->
+      <template x-if="screen === 'groups'">
+        <main>
+          <h1>Guruhlar</h1>
+          <p class="muted" x-text="today"></p>
+          <template x-if="groups.length === 0">
+            <p class="empty">Bugun dars yo'q</p>
+          </template>
+          <ul class="list">
+            <template x-for="g in groups" :key="g.id">
+              <li>
+                <button class="card" @click="openGroup(g)">
+                  <span class="card-title" x-text="g.name"></span>
+                  <span class="card-meta">
+                    <span x-text="g.students_count + ' o\'quvchi'"></span>
+                    <template x-if="g.lesson">
+                      <span
+                        class="badge"
+                        :class="g.lesson.submitted ? 'ok' : 'warn'"
+                        x-text="g.lesson.submitted ? 'Yuborilgan' : 'Kutilmoqda'"
+                      ></span>
+                    </template>
+                    <template x-if="!g.lesson">
+                      <span class="badge">Dars yo'q</span>
+                    </template>
+                  </span>
+                </button>
+              </li>
+            </template>
+          </ul>
+        </main>
+      </template>
+
+      <!-- Ekran 2: davomat -->
+      <template x-if="screen === 'attendance'">
+        <main>
+          <header class="bar">
+            <button class="back" @click="screen = 'groups'">←</button>
+            <h1 x-text="currentGroup?.name"></h1>
+          </header>
+          <button class="link" @click="allPresent()">Hammasi keldi</button>
+          <button class="btn primary submit-btn" @click="submit()" :disabled="submitting">
+            <span x-show="!submitting">Yuborish</span>
+            <span x-show="submitting">Yuborilmoqda…</span>
+          </button>
+          <ul class="list">
+            <template x-for="s in students" :key="s.id">
+              <li>
+                <button
+                  class="student"
+                  :data-status="s.status || 'present'"
+                  @click="cycleStatus(s)"
+                >
+                  <span x-text="s.name"></span>
+                  <span class="st" x-text="statusLabel(s)"></span>
+                </button>
+              </li>
+            </template>
+          </ul>
+        </main>
+      </template>
+
+      <!-- Ekran 3: natija -->
+      <template x-if="screen === 'result'">
+        <main class="center">
+          <div class="result-icon">✓</div>
+          <h1>Yuborildi</h1>
+          <p x-text="resultText"></p>
+          <button class="btn primary" @click="screen = 'groups'; loadGroups()">
+            Barcha guruhlar
+          </button>
+        </main>
+      </template>
+
+      <div x-show="error" class="error" x-text="error"></div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
