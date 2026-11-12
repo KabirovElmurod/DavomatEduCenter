@@ -6,12 +6,13 @@
 {% if centers %}
 <div class="table-wrap">
 <table>
-  <thead><tr><th>ID</th><th>Nomi</th><th>Owner</th><th>Telegram</th><th>Guruh</th><th>O'quvchi</th><th>Holat</th></tr></thead>
+  <thead><tr><th>ID</th><th>Nomi</th><th>Subdomain</th><th>Owner</th><th>Telegram</th><th>Guruh</th><th>O'quvchi</th><th>Holat</th></tr></thead>
   <tbody>
   {% for c in centers %}
     <tr>
       <td>{{ c.id }}</td>
       <td><strong>{{ c.name }}</strong></td>
+      <td>{% if c.subdomain %}<code>{{ c.subdomain }}.testvix.uz</code>{% else %}<span class="muted">—</span>{% endif %}</td>
       <td>{{ c.owner_name or '—' }}{% if c.owner_username %} <span class="muted">@{{ c.owner_username }}</span>{% endif %}</td>
       <td>{{ c.owner_telegram_id or '—' }}</td>
       <td>{{ c.group_count }}</td>
@@ -31,6 +32,7 @@
       hx-on::after-request="if(event.detail.successful) location.reload()">
   <div class="grid">
     <input type="text" name="name" placeholder="Markaz nomi" required>
+    <input type="text" name="subdomain" placeholder="Subdomain (masalan: englishpro)">
     <input type="number" name="owner_telegram_id" placeholder="Owner Telegram ID" required>
     <input type="text" name="owner_first_name" placeholder="Owner ismi" required>
     <input type="text" name="owner_last_name" placeholder="Owner familiyasi">

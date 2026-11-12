@@ -17,8 +17,16 @@ class Settings(BaseSettings):
     JWT_SECRET: str
     SESSION_SECRET: str
 
-    # Public URL (for Telegram Login Widget and webhooks)
+    # Public URL (for Telegram Login Widget, webapp links, admin UI)
     PUBLIC_URL: str = "http://localhost:8000"
+
+    # Bot webhook'ning alohida subdomain'i (masalan bot.testvix.uz).
+    # Bo'sh bo'lsa webhook PUBLIC_URL ostida ochiladi.
+    BOT_PUBLIC_URL: str = ""
+
+    # Markaz subdomain'lari bazaviy domeni (masalan testvix.uz).
+    # Bo'sh bo'lsa markaz linklari PUBLIC_URL'dan foydalanadi.
+    BASE_DOMAIN: str = ""
 
     # Local dev: Telegram'siz admin login (/admin/dev-login)
     DEV_MODE: bool = False

@@ -22,11 +22,11 @@ async def lifespan(app: FastAPI):
     # Startup
     bot = await get_webhook_bot()
     # Only set webhook if not in polling mode
-    if settings.PUBLIC_URL != "http://localhost:8000":
+    if settings.PUBLIC_URL.strip() != "http://localhost:8000":
         await set_webhook(bot)
     yield
     # Shutdown
-    if settings.PUBLIC_URL != "http://localhost:8000":
+    if settings.PUBLIC_URL.strip() != "http://localhost:8000":
         await delete_webhook(bot)
 
 

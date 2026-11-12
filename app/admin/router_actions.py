@@ -422,6 +422,7 @@ async def students_bulk_transfer(
 @router.post("/centers")
 async def center_create(
     name: str = Form(...),
+    subdomain: str = Form(""),
     owner_telegram_id: int = Form(...),
     owner_first_name: str = Form(...),
     owner_last_name: str = Form(""),
@@ -439,12 +440,22 @@ async def center_create(
     if not name or not owner_first_name:
         return _err("Markaz nomi va owner ismi majburiy")
 
+    from app.core.urls import normalize_subdomain
+
+    slug = normalize_subdomain(subdomain)
+    if subdomain.strip() and slug is None:
+        return _err("Subdomain noto'g'ri (faqat a-z, 0-9, -, 50 belgigacha)")
+    if slug:
+        dup = await db.execute(select(Center.id).where(Center.subdomain == slug))
+        if dup.scalar_one_or_none():
+            return _err("Bu subdomain band", 409)
+
     # Owner telegram_id band emasligi kerak
     existing = await db.execute(select(User).where(User.telegram_id == owner_telegram_id))
     if existing.scalar_one_or_none():
         return _err("Bu telegram_id bilan user allaqachon mavjud", 409)
 
-    center = Center(name=name, is_active=True)
+    center = Center(name=name, subdomain=slug, is_active=True)
     db.add(center)
     await db.flush()
 
@@ -466,7 +477,7 @@ async def center_create(
         actor_id=admin["user_id"],
         entity="center",
         entity_id=center.id,
-        new={"name": name, "owner_telegram_id": owner_telegram_id},
+        new={"name": name, "subdomain": slug, "owner_telegram_id": owner_telegram_id},
     )
     await db.commit()
     return _ok(center_id=center.id)

@@ -42,7 +42,8 @@ async def get_webhook_bot() -> Bot:
 
 async def set_webhook(bot: Bot) -> None:
     """Webhookni o'rnatish (to'g'ridan-to'g'ri Telegram API)"""
-    webhook_url = f"{settings.PUBLIC_URL}{settings.WEBHOOK_PATH}"
+    base = (settings.BOT_PUBLIC_URL or settings.PUBLIC_URL).strip().rstrip("/")
+    webhook_url = f"{base}{settings.WEBHOOK_PATH}"
     import aiohttp
 
     async with aiohttp.ClientSession() as client:

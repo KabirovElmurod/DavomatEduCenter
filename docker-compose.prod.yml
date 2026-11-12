@@ -1,0 +1,17 @@
+# docker-compose.prod.yml — VPS deploy (nginx *.testvix.uz -> 127.0.0.1:8200)
+# Ishlatish: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+services:
+  postgres:
+    # Tashqariga port ochilmaydi — faqat docker network ichida
+    ports: !reset []
+
+  redis:
+    ports: !reset []
+
+  api:
+    ports:
+      - "127.0.0.1:8200:8000"
+
+  worker:
+    # worker'ga tashqi port shart emas
+    ports: !reset []

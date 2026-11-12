@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.db import AsyncSessionLocal
 from app.core.logging import get_logger
+from app.core.urls import center_url
 from app.models.base import UserRole
 from app.models.user import User
 from app.services.invite import InviteService
@@ -40,7 +41,15 @@ async def set_webapp_button(bot: Bot, user: User) -> None:
 
     Owner/Teacher/Admin uchun davomat WebApp'ga ochadi.
     """
-    webapp_url = f"{settings.PUBLIC_URL}/webapp?token={user.telegram_id}"
+    base = settings.PUBLIC_URL.rstrip("/")
+    if user.center_id:
+        from app.models.center import Center
+
+        async with AsyncSessionLocal() as s:
+            center = await s.get(Center, user.center_id)
+        if center and center.subdomain:
+            base = center_url(center.subdomain)
+    webapp_url = f"{base}/webapp?token={user.telegram_id}"
     await bot.set_chat_menu_button(
         menu_button=MenuButtonWebApp(
             text="📊 Davomat",
@@ -221,7 +230,7 @@ async def handle_existing_user(message: Message, user: User, session: AsyncSessi
         text += "\n\nDavomatni belgilash uchun quyidagi tugmani bosing."
         await message.answer(text)
         await set_webapp_button(message.bot, user)
-        await _send_admin_login_link(message, user)
+        await _send_admin_login_link(message, user, session)
 
     elif user.role == UserRole.SUPER_ADMIN:
         await message.answer(
@@ -229,7 +238,7 @@ async def handle_existing_user(message: Message, user: User, session: AsyncSessi
             "Sizning rolingiz: super_admin (platforma administratori)\n\n"
             "Barcha o'quv markazlarni admin panel orqali boshqarasiz."
         )
-        await _send_admin_login_link(message, user)
+        await _send_admin_login_link(message, user, session)
 
     elif user.role == UserRole.TEACHER:
         parts = [
@@ -275,18 +284,26 @@ async def handle_existing_user(message: Message, user: User, session: AsyncSessi
         await message.answer("❌ Noma'lum rol. Iltimos, administrator bilan bog'laning.")
 
 
-async def _send_admin_login_link(message: Message, user: User) -> None:
+async def _send_admin_login_link(
+    message: Message, user: User, session: AsyncSession
+) -> None:
     """
     Owner/admin/super_admin uchun bir martalik admin panel login linki.
 
     Token Redis'da 10 daqiqa saqlanadi va bir marta ishlatiladi.
+    Link markazning o'z subdomain'iga yo'naltiriladi.
     """
     try:
         token = await create_login_token(user.id)
     except Exception as e:
         logger.warning("Login token yaratilmadi", error=str(e), user_id=user.id)
         return
-    url = f"{settings.PUBLIC_URL}/admin/login-link?token={token}"
+    center = None
+    if user.center_id:
+        from app.models.center import Center
+
+        center = await session.get(Center, user.center_id)
+    url = f"{center_url(center.subdomain if center else None)}/admin/login-link?token={token}"
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="🔑 Admin panelga kirish", url=url)]

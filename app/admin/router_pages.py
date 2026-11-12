@@ -501,6 +501,7 @@ async def centers_page(
         select(
             Center.id,
             Center.name,
+            Center.subdomain,
             Center.is_active,
             owner_user.telegram_id,
             owner_user.first_name,
@@ -519,6 +520,7 @@ async def centers_page(
         {
             "id": r.id,
             "name": r.name,
+            "subdomain": r.subdomain,
             "is_active": r.is_active,
             "owner_name": " ".join(x for x in [r.first_name, r.last_name] if x) or None,
             "owner_telegram_id": r.telegram_id,
