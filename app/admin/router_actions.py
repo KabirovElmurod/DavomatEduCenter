@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.admin.common import get_admin_context, render, telegram_link
+from app.admin.common import get_admin_context, get_bot_username, render, telegram_link
 from app.core.db import get_db
 from app.core.deps import get_current_admin, verify_csrf
 from app.models.base import AttendanceStatus, UserRole
@@ -423,22 +423,26 @@ async def students_bulk_transfer(
 async def center_create(
     name: str = Form(...),
     subdomain: str = Form(""),
-    owner_telegram_id: int = Form(...),
-    owner_first_name: str = Form(...),
+    owner_telegram_id: str = Form(""),
+    owner_first_name: str = Form(""),
     owner_last_name: str = Form(""),
     owner_username: str = Form(""),
     admin: dict = Depends(get_current_admin),
     _: None = Depends(verify_csrf),
     db: AsyncSession = Depends(get_db),
 ):
-    """Yangi markaz + owner yaratish (super_admin)"""
+    """Yangi markaz (+ ixtiyoriy owner yoki owner-taklif havolasi)"""
     if admin.get("role") != "super_admin":
         return _err("Faqat super_admin", 403)
 
     name = name.strip()
+    if not name:
+        return _err("Markaz nomi majburiy")
+
+    owner_telegram_id = owner_telegram_id.strip()
     owner_first_name = owner_first_name.strip()
-    if not name or not owner_first_name:
-        return _err("Markaz nomi va owner ismi majburiy")
+    if owner_telegram_id and not owner_first_name:
+        return _err("Owner telegram_id kiritilsa ismi ham majburiy")
 
     from app.core.urls import normalize_subdomain
 
@@ -450,26 +454,45 @@ async def center_create(
         if dup.scalar_one_or_none():
             return _err("Bu subdomain band", 409)
 
-    # Owner telegram_id band emasligi kerak
-    existing = await db.execute(select(User).where(User.telegram_id == owner_telegram_id))
-    if existing.scalar_one_or_none():
-        return _err("Bu telegram_id bilan user allaqachon mavjud", 409)
+    if owner_telegram_id:
+        try:
+            tg_id = int(owner_telegram_id)
+        except ValueError:
+            return _err("Owner Telegram ID son bo'lishi kerak")
+        existing = await db.execute(select(User).where(User.telegram_id == tg_id))
+        if existing.scalar_one_or_none():
+            return _err("Bu telegram_id bilan user allaqachon mavjud", 409)
+    else:
+        tg_id = None
 
     center = Center(name=name, subdomain=slug, is_active=True)
     db.add(center)
     await db.flush()
 
-    owner = User(
-        telegram_id=owner_telegram_id,
-        first_name=owner_first_name,
-        last_name=owner_last_name.strip() or None,
-        username=owner_username.strip() or None,
-        role=UserRole.OWNER,
-        center_id=center.id,
-        is_active=True,
-    )
-    db.add(owner)
-    await db.flush()
+    if tg_id is not None:
+        owner = User(
+            telegram_id=tg_id,
+            first_name=owner_first_name,
+            last_name=owner_last_name.strip() or None,
+            username=owner_username.strip() or None,
+            role=UserRole.OWNER,
+            center_id=center.id,
+            is_active=True,
+        )
+        db.add(owner)
+        await db.flush()
+
+    # Owner-taklif havolasi — kim start qilsa, o'sha owner bo'ladi
+    invite_url = None
+    if tg_id is None:
+        from app.services.invite import InviteService
+
+        inv = await InviteService(db).create(
+            center_id=center.id,
+            actor_id=admin["user_id"],
+            role=UserRole.OWNER,
+        )
+        invite_url = f"https://t.me/{await get_bot_username()}?start={inv.token}"
 
     audit = AuditService(db)
     await audit.log_create(
@@ -477,10 +500,10 @@ async def center_create(
         actor_id=admin["user_id"],
         entity="center",
         entity_id=center.id,
-        new={"name": name, "subdomain": slug, "owner_telegram_id": owner_telegram_id},
+        new={"name": name, "subdomain": slug, "owner_telegram_id": tg_id},
     )
     await db.commit()
-    return _ok(center_id=center.id)
+    return _ok(center_id=center.id, invite_url=invite_url)
 
 
 # --------------------------------------------------------------------------

@@ -394,6 +394,8 @@ async def handle_teacher_invite(
         "Davomatni belgilash uchun quyidagi tugmani bosing."
     )
     await set_webapp_button(message.bot, user)
+    if user_data["role"] in (UserRole.OWNER, UserRole.ADMIN):
+        await _send_admin_login_link(message, user, session)
 
 
 async def handle_parent_link(

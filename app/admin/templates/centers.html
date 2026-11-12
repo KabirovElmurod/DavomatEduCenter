@@ -29,17 +29,16 @@
 
 <h2>Yangi markaz</h2>
 <form hx-post="/admin/centers" hx-swap="none"
-      hx-on::after-request="if(event.detail.successful) location.reload()">
+      hx-on::after-request="if(event.detail.successful){var d=event.detail.xhr.responseJSON;if(d&&d.invite_url){prompt('Owner uchun bot havolasi (yuboring):',d.invite_url)}location.reload()}">
   <div class="grid">
     <input type="text" name="name" placeholder="Markaz nomi" required>
     <input type="text" name="subdomain" placeholder="Subdomain (masalan: englishpro)">
-    <input type="number" name="owner_telegram_id" placeholder="Owner Telegram ID" required>
-    <input type="text" name="owner_first_name" placeholder="Owner ismi" required>
+    <input type="text" name="owner_telegram_id" placeholder="Owner Telegram ID (ixtiyoriy)">
+    <input type="text" name="owner_first_name" placeholder="Owner ismi (ixtiyoriy)">
     <input type="text" name="owner_last_name" placeholder="Owner familiyasi">
     <input type="text" name="owner_username" placeholder="Owner username (@sizsiz)">
     <button type="submit">Markaz yaratish</button>
   </div>
-  <p class="muted">Owner Telegram ID'ni <a href="https://t.me/userinfobot" target="_blank">@userinfobot</a> orqali bilib olishi mumkin — u /start qilganda ID'sini ko'rsatadi.</p>
+  <p class="muted">Owner Telegram ID bo'sh qoldirilsa — bot orqali owner-taklif havolasi yaratiladi (yuqorida ko'rinadi, uni owner'ga yuboring). U /start qilganda o'zini owner sifatida ro'yxatdan o'tkazadi.</p>
 </form>
-<p class="muted">Owner bot orqali /start qilganda o'z markaziga kira oladi.</p>
 {% endblock %}

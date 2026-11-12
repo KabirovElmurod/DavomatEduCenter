@@ -44,8 +44,8 @@ class InviteService:
         Returns:
             Invite token
         """
-        if role not in (UserRole.TEACHER, UserRole.ADMIN):
-            raise ValueError("Faqat teacher yoki admin rollari uchun token yaratish mumkin")
+        if role not in (UserRole.TEACHER, UserRole.ADMIN, UserRole.OWNER):
+            raise ValueError("Faqat teacher, admin yoki owner rollari uchun token yaratish mumkin")
 
         token = self._generate_token()
         expires_at = datetime.now(UTC) + timedelta(hours=expires_in_hours)
